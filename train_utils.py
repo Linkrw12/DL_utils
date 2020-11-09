@@ -14,18 +14,17 @@ class SAETrainer:
         self.epochs  = epochs
         self.seed    = seed
     
+	def freeze_single_layer(self, layer):
+		for param in layer.parameters():
+			param.requires_grad = False
+	
     def freeze_weights(self, learner, step):
         """
         
         """
         learner.model.eval()
-        
-        learner.model.hidden_layers[step-1].layer.weight.requires_grad = False
-        learner.model.hidden_layers[step-1].layer.bias.requires_grad = False
-        
-        learner.model.hidden_layers[-step].layer.weight.requires_grad = False
-        learner.model.hidden_layers[-step].layer.bias.requires_grad = False
-        
+        self.freeze_single_layer(learner.model.hidden_layers[step-1])
+        self.freeze_single_layer(learner.model.hidden_layers[-step])
         learner.model.train()
     
     def fit_one_cycle(self, learner, lr_min, lr_steep):
@@ -48,10 +47,6 @@ class SAETrainer:
         self.fit_one_cycle(learner, lr_min, lr_steep)
         self.freeze_weights(learner, step)
         
-    def freeze_all_layers(self, learner):
-        for params in learner.model.params:
-            params.requires_grad = False
-        
     def train_sae(self, learner):
         
         set_seed(self.seed)
@@ -61,6 +56,9 @@ class SAETrainer:
         
         for step in train_steps:
             self.train_sae_step(learner, step)
+		
+		learner.model.train_step = 0
+        learner.model.eval()
 
 def set_seed(seed):
     """
