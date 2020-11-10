@@ -47,17 +47,35 @@ class SAETrainer:
         self.fit_one_cycle(learner, lr_min, lr_steep)
         self.freeze_weights(learner, step)
         
+        
+    def plot_train_val_loss(self, learner, title, savefile = None):
+        
+        fig, ax = plt.subplots()
+        learner.recorder.plot_loss()
+        
+        sbn.despine()
+        plt.ylabel("MSE Loss")
+        plt.xlabel("Batches")
+        plt.title(title)
+        
+        if savefile:
+            plt.savefig(savefile, dpi = 300)
+        
+        plt.show()
+        
     def train_sae(self, learner):
         
         set_seed(self.seed)
         
-        STEPS = len(learner.model.hidden_layers)
+        STEPS = len(learner.model.hidden_layer_arg)
         train_steps = range(1, STEPS+1)
         
         for step in train_steps:
             self.train_sae_step(learner, step)
-		
-		learner.model.train_step = 0
+            self.plot_train_val_loss(learner,
+                                     title = f"SAE Phase {step} Train-Val Loss")
+            
+        learner.model.train_step = 0
         learner.model.eval()
 
 def set_seed(seed):
